@@ -1,0 +1,447 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - Drowsiness Detection{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-cog text-primary me-2"></i>
+        Admin Panel
+    </h2>
+    <a href="/admin/logout" class="btn btn-outline-secondary">
+        <i class="fas fa-sign-out-alt me-2"></i>
+        Logout
+    </a>
+</div>
+
+<!-- Configuration Tabs -->
+<ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="telegram-tab" data-bs-toggle="tab" data-bs-target="#telegram" type="button">
+            <i class="fab fa-telegram me-2"></i>Telegram Settings
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="detection-tab" data-bs-toggle="tab" data-bs-target="#detection" type="button">
+            <i class="fas fa-eye me-2"></i>Detection Settings
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button">
+            <i class="fas fa-shield-alt me-2"></i>Security
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="adminTabsContent">
+    <!-- Telegram Settings -->
+    <div class="tab-pane fade show active" id="telegram" role="tabpanel">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fab fa-telegram text-primary me-2"></i>
+                            Telegram Bot Configuration
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="telegram-form">
+                            <div class="mb-3">
+                                <label for="bot-token" class="form-label">Bot Token</label>
+                                <input type="text" class="form-control" id="bot-token" 
+                                       placeholder="Enter your Telegram bot token" value="{{ config.bot_token }}">
+                                <div class="form-text">
+                                    Get your bot token from <a href="https://t.me/BotFather" target="_blank">@BotFather</a>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Recipients</label>
+                                <div id="recipients-container">
+                                    {% for chat_id in config.chat_ids %}
+                                    <div class="input-group mb-2 recipient-item">
+                                        <input type="text" class="form-control chat-id-input" value="{{ chat_id }}" readonly>
+                                        <button class="btn btn-outline-danger" type="button" onclick="removeRecipient(this)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-primary" onclick="findRecipients()">
+                                        <i class="fas fa-search me-2"></i>Find Recipients
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success" onclick="testTelegram()">
+                                        <i class="fas fa-paper-plane me-2"></i>Test Bot
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Telegram Settings
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Setup Instructions</h6>
+                    </div>
+                    <div class="card-body">
+                        <ol class="small">
+                            <li>Create a bot with <a href="https://t.me/BotFather" target="_blank">@BotFather</a></li>
+                            <li>Copy the bot token and paste it above</li>
+                            <li>Start your bot and send it a message</li>
+                            <li>Click "Find Recipients" to discover chat IDs</li>
+                            <li>Select recipients and save settings</li>
+                            <li>Test the configuration</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detection Settings -->
+    <div class="tab-pane fade" id="detection" role="tabpanel">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-eye text-success me-2"></i>
+                            Detection Parameters
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="detection-form">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="emergency-threshold" class="form-label">Emergency Threshold (seconds)</label>
+                                        <input type="number" class="form-control" id="emergency-threshold" 
+                                               step="0.1" min="0.5" max="10" value="{{ config.emergency_threshold }}">
+                                        <div class="form-text">
+                                            Minimum duration to trigger emergency alert
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="max-alerts" class="form-label">Max Alerts per 5 minutes</label>
+                                        <input type="number" class="form-control" id="max-alerts" 
+                                               min="1" max="20" value="{{ config.max_alerts_per_5min }}">
+                                        <div class="form-text">
+                                            Prevent spam by limiting alerts
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-2"></i>Save Detection Settings
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Recommendations</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h6>Optimal Settings:</h6>
+                            <ul class="mb-0 small">
+                                <li><strong>Threshold:</strong> 2.5-3.5 seconds</li>
+                                <li><strong>Max Alerts:</strong> 3-5 per 5 minutes</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <h6>Important:</h6>
+                            <p class="mb-0 small">
+                                Lower thresholds may cause false positives. 
+                                Higher values may miss critical events.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Security Settings -->
+    <div class="tab-pane fade" id="security" role="tabpanel">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-shield-alt text-warning me-2"></i>
+                            Security Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="security-form">
+                            <div class="mb-3">
+                                <label for="admin-password" class="form-label">Admin Password</label>
+                                <input type="password" class="form-control" id="admin-password" 
+                                       placeholder="Enter new admin password">
+                                <div class="form-text">
+                                    Leave blank to keep current password
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-key me-2"></i>Update Password
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Security Tips</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="small">
+                            <li>Use a strong, unique password</li>
+                            <li>Change the default password immediately</li>
+                            <li>Don't share admin credentials</li>
+                            <li>Keep your bot token secure</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recipients Modal -->
+<div class="modal fade" id="recipientsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-users me-2"></i>Available Recipients
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="recipients-loading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Searching for recipients...</p>
+                </div>
+                
+                <div id="recipients-list" style="display: none;">
+                    <p class="text-muted">Select recipients to add:</p>
+                    <div id="recipients-items"></div>
+                </div>
+                
+                <div id="recipients-error" style="display: none;" class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="error-message"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="addSelectedRecipients()">
+                    <i class="fas fa-plus me-2"></i>Add Selected
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let selectedRecipients = [];
+    
+    // Save Telegram settings
+    document.getElementById('telegram-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const botToken = document.getElementById('bot-token').value;
+        const chatIds = Array.from(document.querySelectorAll('.chat-id-input')).map(input => input.value);
+        
+        const config = {
+            bot_token: botToken,
+            chat_ids: chatIds
+        };
+        
+        saveConfig(config, 'Telegram settings saved successfully!');
+    });
+    
+    // Save Detection settings
+    document.getElementById('detection-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const config = {
+            emergency_threshold: parseFloat(document.getElementById('emergency-threshold').value),
+            max_alerts_per_5min: parseInt(document.getElementById('max-alerts').value)
+        };
+        
+        saveConfig(config, 'Detection settings saved successfully!');
+    });
+    
+    // Save Security settings
+    document.getElementById('security-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const password = document.getElementById('admin-password').value;
+        if (!password) {
+            alert('Please enter a new password');
+            return;
+        }
+        
+        const config = {
+            admin_password: password
+        };
+        
+        saveConfig(config, 'Password updated successfully!');
+        document.getElementById('admin-password').value = '';
+    });
+    
+    // Generic config save function
+    function saveConfig(config, successMessage) {
+        fetch('/api/config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(config)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(successMessage);
+            } else {
+                alert('Error saving configuration: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Error saving configuration: ' + error.message);
+        });
+    }
+    
+    // Find recipients
+    function findRecipients() {
+        const modal = new bootstrap.Modal(document.getElementById('recipientsModal'));
+        modal.show();
+        
+        // Reset modal state
+        document.getElementById('recipients-loading').style.display = 'block';
+        document.getElementById('recipients-list').style.display = 'none';
+        document.getElementById('recipients-error').style.display = 'none';
+        
+        fetch('/api/get_telegram_updates')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('recipients-loading').style.display = 'none';
+                
+                if (data.success && data.chats.length > 0) {
+                    displayRecipients(data.chats);
+                } else {
+                    showRecipientsError(data.error || 'No recipients found. Make sure people have messaged your bot.');
+                }
+            })
+            .catch(error => {
+                document.getElementById('recipients-loading').style.display = 'none';
+                showRecipientsError('Error fetching recipients: ' + error.message);
+            });
+    }
+    
+    function displayRecipients(chats) {
+        const container = document.getElementById('recipients-items');
+        container.innerHTML = '';
+        
+        chats.forEach(chat => {
+            const item = document.createElement('div');
+            item.className = 'form-check mb-2 p-3 border rounded';
+            item.innerHTML = `
+                <input class="form-check-input" type="checkbox" value="${chat.id}" id="chat-${chat.id}">
+                <label class="form-check-label w-100" for="chat-${chat.id}">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>${chat.first_name} ${chat.last_name}</strong>
+                            ${chat.username ? `(@${chat.username})` : ''}
+                        </div>
+                        <small class="text-muted">${chat.id}</small>
+                    </div>
+                    ${chat.last_message ? `<small class="text-muted">Last: "${chat.last_message}"</small>` : ''}
+                </label>
+            `;
+            container.appendChild(item);
+        });
+        
+        document.getElementById('recipients-list').style.display = 'block';
+    }
+    
+    function showRecipientsError(message) {
+        document.getElementById('error-message').textContent = message;
+        document.getElementById('recipients-error').style.display = 'block';
+    }
+    
+    function addSelectedRecipients() {
+        const checkboxes = document.querySelectorAll('#recipients-items input[type="checkbox"]:checked');
+        const container = document.getElementById('recipients-container');
+        
+        checkboxes.forEach(checkbox => {
+            // Check if already exists
+            const existing = Array.from(document.querySelectorAll('.chat-id-input')).find(input => input.value === checkbox.value);
+            if (!existing) {
+                const item = document.createElement('div');
+                item.className = 'input-group mb-2 recipient-item';
+                item.innerHTML = `
+                    <input type="text" class="form-control chat-id-input" value="${checkbox.value}" readonly>
+                    <button class="btn btn-outline-danger" type="button" onclick="removeRecipient(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                container.appendChild(item);
+            }
+        });
+        
+        bootstrap.Modal.getInstance(document.getElementById('recipientsModal')).hide();
+    }
+    
+    function removeRecipient(button) {
+        button.closest('.recipient-item').remove();
+    }
+    
+    function testTelegram() {
+        fetch('/api/test_telegram', {method: 'POST'})
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Test message sent successfully!');
+                } else {
+                    alert('Test failed: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Test failed: ' + error.message);
+            });
+    }
+</script>
+{% endblock %}
