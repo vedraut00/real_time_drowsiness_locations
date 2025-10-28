@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  drowsiness-detector:
+    build: .
+    container_name: drowsiness-detection-system
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount config file to persist settings
+      - ./telegram_config.json:/app/telegram_config.json
+      # Mount models if they exist
+      - ./eye_model.pt:/app/eye_model.pt
+      - ./yawn_model.pt:/app/yawn_model.pt
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    devices:
+      # Access to webcam (Linux)
+      - /dev/video0:/dev/video0
+    restart: unless-stopped
+    networks:
+      - drowsiness-net
+
+networks:
+  drowsiness-net:
+    driver: bridge

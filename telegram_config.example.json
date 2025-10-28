@@ -1,0 +1,7 @@
+{
+  "bot_token": "YOUR_BOT_TOKEN_HERE",
+  "chat_ids": [],
+  "emergency_threshold": 3.0,
+  "max_alerts_per_5min": 5,
+  "admin_password": "admin123"
+}

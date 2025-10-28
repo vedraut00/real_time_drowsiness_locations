@@ -1,14 +1,11 @@
+# OS Files
 /desktop.ini
+.DS_Store
+Thumbs.db
+
+# Python
 /venv
 /venv_gpu
-/database
-/datasets
-/.gitmodules
-/.idea
-/GroundingDINO
-/datasetsHungingFace
-/requirements
-yolov8n.pt
 __pycache__/
 *.pyc
 *.pyo
@@ -19,5 +16,29 @@ __pycache__/
 *.egg-info/
 dist/
 build/
-telegram_config.json
 *.log
+
+# Project Data
+/database
+/datasets
+/datasetsHungingFace
+/requirements
+yolov8n.pt
+
+# IDE
+/.idea
+/.vscode
+*.swp
+*.swo
+
+# Git
+/.gitmodules
+
+# Models (optional)
+/GroundingDINO
+
+# Configuration (sensitive)
+telegram_config.json
+
+# Docker
+.dockerignore

@@ -4,6 +4,18 @@ Real-time drowsiness detection using computer vision and machine learning to mon
 
 ## 🚀 Quick Start
 
+### 🐳 Docker (Recommended - Easiest)
+```bash
+# Windows
+docker-run.bat
+
+# Linux/Mac
+chmod +x docker-run.sh
+./docker-run.sh
+```
+Access at: http://localhost:5000
+
+### 💻 Native Installation
 1. **Run the system:**
    ```cmd
    launch.bat
@@ -18,39 +30,96 @@ Real-time drowsiness detection using computer vision and machine learning to mon
 
 ```
 Real_time_drowsy_driving_detection/
-├── DrowsinessDetector_Universal.py  # Main detection system
-├── setup_telegram.py               # Telegram bot setup
-├── telegram_config.json           # Telegram configuration
-├── launch.bat                     # Easy launcher
-├── requirements.txt              # Dependencies
-├── dataset.yaml                 # YOLO dataset config
-└── runs/                       # Trained models
-    ├── detecteye/
-    └── detectyawn/
+├── 🐳 Docker Files
+│   ├── Dockerfile                    # Container image definition
+│   ├── docker-compose.yml           # Container orchestration
+│   ├── docker-run.bat              # Windows launcher
+│   ├── docker-run.sh              # Linux/Mac launcher
+│   └── DOCKER_README.md          # Docker documentation
+├── 🌐 Web Interface
+│   ├── web_app.py                  # Web-only mode
+│   ├── hybrid_detector.py         # Hybrid PC/Web mode
+│   └── templates/                # HTML templates
+│       ├── index.html           # Main dashboard
+│       ├── hybrid_index.html   # Hybrid dashboard
+│       ├── admin.html         # Admin panel
+│       └── base.html         # Base template
+├── 🤖 Core System
+│   ├── DrowsinessDetector_Universal.py  # Main detection engine
+│   ├── setup_telegram.py              # Telegram bot setup
+│   └── telegram_config.json          # Telegram configuration
+├── 🚀 Launchers
+│   ├── launch.bat                    # Native launcher
+│   ├── start_web_app.bat           # Web mode launcher
+│   └── start_hybrid.bat           # Hybrid mode launcher
+└── 📦 Configuration
+    ├── requirements.txt          # Python dependencies
+    └── dataset.yaml            # YOLO dataset config
 ```
 
 ## ✨ Features
 
+### 🎯 Detection Capabilities
 - **Real-time Detection**: Monitors eye closure and yawning via webcam
-- **GPU Acceleration**: Optimized for NVIDIA RTX GPUs (falls back to CPU)
+- **Smart Thresholds**: Distinguishes normal blinks from drowsiness (>1 second)
+- **Dual Detection**: Eye closure (EAR) and yawn detection (MAR)
+- **Alert Limiting**: Prevents spam with configurable alert thresholds
+
+### 🌐 Multiple Modes
+- **Web Mode**: Browser-based interface, accessible from any device
+- **Hybrid Mode**: High-performance OpenCV window + web dashboard
+- **PC Mode**: Native desktop application with PyQt5 GUI
+
+### 📱 Notifications & Tracking
 - **Telegram Alerts**: Emergency notifications when critical drowsiness detected
-- **Smart Thresholds**: Configurable microsleep detection (default: 4 seconds)
-- **Visual Interface**: PyQt5 GUI with real-time statistics
-- **Sound Alerts**: Audio warnings for immediate attention
+- **Live Location**: Real-time IP geolocation with interactive maps
+- **Alert History**: Track all drowsiness events with timestamps
+- **Statistics Dashboard**: Blinks, yawns, session duration, and more
+
+### ⚡ Performance
+- **GPU Acceleration**: Optimized for NVIDIA RTX GPUs (falls back to CPU)
+- **MediaPipe Integration**: Fast and accurate facial landmark detection
+- **Efficient Streaming**: Socket.IO for real-time video and data updates
+- **Docker Support**: Easy deployment with containerization
 
 ## 🔧 Installation
 
-### Option 1: Quick Setup (Recommended)
+### Option 1: Docker (Recommended - Easiest) 🐳
+```bash
+# Clone repository
+git clone https://github.com/vedraut00/real_time_drowsiness_locations.git
+cd real_time_drowsiness_locations
+
+# Windows
+docker-run.bat
+
+# Linux/Mac
+chmod +x docker-run.sh
+./docker-run.sh
+```
+
+**Benefits:**
+- ✅ No Python installation needed
+- ✅ No dependency conflicts
+- ✅ Works on Windows, Linux, and Mac
+- ✅ Easy updates and rollbacks
+- ✅ Isolated environment
+
+See [DOCKER_README.md](DOCKER_README.md) for detailed Docker documentation.
+
+### Option 2: Native Installation (Advanced)
+
+#### Quick Setup
 ```cmd
 # Clone repository
-git clone https://github.com/tyrerodr/Real_time_drowsy_driving_detection.git
-cd Real_time_drowsy_driving_detection
+git clone https://github.com/vedraut00/real_time_drowsiness_locations.git
+cd real_time_drowsiness_locations
 
 # Run launcher - it will guide you through setup
 launch.bat
 ```
 
-### Option 2: Manual Setup
+#### Manual Setup
 ```cmd
 # Create virtual environment
 python -m venv venv_gpu
@@ -59,7 +128,14 @@ venv_gpu\Scripts\activate.bat
 # Install dependencies
 pip install -r requirements.txt
 
-# Run detection
+# Choose your mode:
+# Web Mode (browser-based)
+python web_app.py
+
+# Hybrid Mode (OpenCV + web dashboard)
+python hybrid_detector.py
+
+# Classic Mode (PyQt5 GUI)
 python DrowsinessDetector_Universal.py
 ```
 
@@ -83,20 +159,55 @@ python DrowsinessDetector_Universal.py
 
 ## 🎯 How It Works
 
-The system uses two YOLOv8 models:
+### Detection Methods
 
-1. **Eye Detection**: Classifies eyes as open/closed
-2. **Yawn Detection**: Detects mouth open (yawning) vs closed
+The system uses **MediaPipe Face Mesh** for facial landmark detection and calculates:
 
-**Detection Logic:**
-- Tracks blinks and microsleep duration
-- Monitors yawn frequency and duration  
-- Triggers alerts when thresholds exceeded
-- Sends Telegram notifications for emergencies
+1. **EAR (Eye Aspect Ratio)**: Measures eye openness
+   - Normal: > 0.25
+   - Closed: < 0.25
+   - Drowsy: Closed for > 1 second
 
-**Performance:**
-- GPU Mode: ~30 FPS (RTX 3070 Ti)
-- CPU Mode: ~10-15 FPS (compatible fallback)
+2. **MAR (Mouth Aspect Ratio)**: Detects yawning
+   - Normal: < 0.6
+   - Yawning: > 0.6
+
+**Optional YOLO Models** (if available):
+- `eye_model.pt`: Enhanced eye state classification
+- `yawn_model.pt`: Advanced yawn detection
+
+### Detection Logic
+
+- ✅ **Normal Blinks** (< 1 second): Counted but not flagged as drowsy
+- ⚠️ **Prolonged Closure** (1-3 seconds): Marked as drowsy state
+- 🚨 **Emergency Alert** (> 3 seconds): Triggers Telegram notification
+- 📊 **Alert Limiting**: Max 5 alerts per 5 minutes to prevent spam
+
+### System Modes
+
+#### 🌐 Web Mode (`web_app.py`)
+- Browser-based interface
+- Access from any device on network
+- Real-time video streaming via Socket.IO
+- ~15 FPS (optimized for web)
+
+#### 🖥️ Hybrid Mode (`hybrid_detector.py`)
+- **PC Mode**: High-performance OpenCV window (~30 FPS)
+- **Web Mode**: Browser dashboard for monitoring
+- Best of both worlds
+- Clean video feed without overlays
+
+#### 💻 Classic Mode (`DrowsinessDetector_Universal.py`)
+- PyQt5 desktop GUI
+- Original implementation
+- Full-featured interface
+
+### Performance
+
+- **Docker**: ~20-25 FPS (CPU mode)
+- **Native GPU**: ~30 FPS (RTX 3070 Ti)
+- **Native CPU**: ~10-15 FPS (compatible fallback)
+- **Web Streaming**: ~15 FPS (optimized for bandwidth)
 
 ## ⚙️ Configuration
 
