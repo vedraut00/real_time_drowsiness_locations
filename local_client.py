@@ -10,6 +10,8 @@ import time
 import json
 import uuid
 import socket
+import hashlib
+import os
 from datetime import datetime
 
 class CloudClient:
