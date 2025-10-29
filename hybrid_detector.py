@@ -20,6 +20,14 @@ from flask import Flask, render_template, jsonify, request, redirect, url_for, s
 from flask_socketio import SocketIO
 import winsound
 
+# Import cloud client
+try:
+    from local_client import CloudClient, load_cloud_config
+    CLOUD_AVAILABLE = True
+except ImportError:
+    CLOUD_AVAILABLE = False
+    print("⚠️  Cloud client not available")
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drowsiness_detection_2024'
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -54,6 +62,7 @@ class HybridDrowsinessDetector:
         # Initialize models and bot
         self.setup_models()
         self.setup_telegram_bot()
+        self.setup_cloud_client()
         
     def load_config(self):
         """Load configuration from file"""
@@ -103,6 +112,22 @@ class HybridDrowsinessDetector:
             print("✅ Telegram bot configured")
         else:
             print("⚠️ Telegram bot not configured")
+    
+    def setup_cloud_client(self):
+        """Setup cloud client"""
+        self.cloud_client = None
+        if CLOUD_AVAILABLE:
+            cloud_config = load_cloud_config()
+            if cloud_config.get('enabled'):
+                try:
+                    self.cloud_client = CloudClient(
+                        cloud_url=cloud_config['cloud_url'],
+                        api_key=cloud_config['api_key'],
+                        device_name=cloud_config.get('device_name')
+                    )
+                    print("✅ Cloud client connected")
+                except Exception as e:
+                    print(f"⚠️  Cloud client error: {e}")
     
     def get_current_location(self):
         """Get current location"""
@@ -201,6 +226,13 @@ class HybridDrowsinessDetector:
         if self.telegram_bot:
             success = self.telegram_bot.send_emergency_alert(duration)
             alert_data["telegram_sent"] = success
+        
+        # Send to cloud dashboard
+        if self.cloud_client:
+            try:
+                self.cloud_client.send_alert(duration, location)
+            except Exception as e:
+                print(f"⚠️  Cloud alert error: {e}")
         
         # Emit to web clients
         socketio.emit('drowsiness_alert', alert_data)
@@ -338,6 +370,13 @@ class HybridDrowsinessDetector:
                 
                 # Update stats
                 self.stats["continuous_sleep"] = round(self.continuous_sleep_time, 2)
+                
+                # Send stats to cloud (every 5 seconds)
+                if self.cloud_client and self.stats["frames_processed"] % 150 == 0:
+                    try:
+                        self.cloud_client.send_stats(self.stats, self.current_location)
+                    except Exception as e:
+                        pass  # Silent fail for stats
                 
                 # Send data to web dashboard
                 socketio.emit('pc_mode_data', {

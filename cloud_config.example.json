@@ -1,0 +1,8 @@
+{
+  "cloud_url": "http://ec2-13-221-227-218.compute-1.amazonaws.com:5000",
+  "api_key": "your_api_key_here",
+  "device_name": "My-Computer",
+  "enabled": true,
+  "send_stats_interval": 5,
+  "send_alerts": true
+}
